@@ -287,9 +287,9 @@ export default function AuthenticatedLayout({ children }) {
                         <span />
                     )} */}
                     <span className="text-[10px] text-red-500 dark:text-red-600 flex items-center gap-1">
-                        Developed by: Dhawines
+                        Developed by: Leng
                         <PhoneCall className="w-3 h-3 inline-block align-middle" />
-                        09352550788
+                        09563317640/09602020120
                     </span>
                 </footer>
             </div>

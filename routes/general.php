@@ -6,18 +6,20 @@ use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\AuthMiddleware;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DailyPerformance\DailyPerformanceController;
+use App\Http\Controllers\DailyPerformance\DpImportController;
 
 $app_name = env('APP_NAME', '');
 
 Route::redirect('/', "/$app_name");
 
-  Route::post('/session/close-beacon', [\App\Http\Controllers\SessionController::class, 'closeBeacon'])
-    ->name('session.close-beacon');
+Route::post('/session/close-beacon', [\App\Http\Controllers\SessionController::class, 'closeBeacon'])
+  ->name('session.close-beacon');
 
-  Route::get('/session/check', [\App\Http\Controllers\SessionController::class, 'check'])
-    ->name('session.check');
-    Route::post('/session/lock', [\App\Http\Controllers\SessionController::class, 'lock'])->name('session.lock');
-    Route::post('/session/touch', [\App\Http\Controllers\SessionController::class, 'touch'])->name('session.touch');
+Route::get('/session/check', [\App\Http\Controllers\SessionController::class, 'check'])
+  ->name('session.check');
+Route::post('/session/lock', [\App\Http\Controllers\SessionController::class, 'lock'])->name('session.lock');
+Route::post('/session/touch', [\App\Http\Controllers\SessionController::class, 'touch'])->name('session.touch');
 
 Route::prefix($app_name)->middleware(AuthMiddleware::class)->group(function () {
 
@@ -34,5 +36,19 @@ Route::prefix($app_name)->middleware(AuthMiddleware::class)->group(function () {
   Route::post("/change-password", [ProfileController::class, 'changePassword'])->name('changePassword');
   Route::post("/verify-password", [ProfileController::class, 'verifyPassword'])->name('verifyPassword');
 
-
+  // Daily Performance
+  Route::prefix('daily-performance')->name('dp.')->controller(DailyPerformanceController::class)->group(function () {
+    Route::get('/', 'dashboard')->name('dashboard');
+    Route::get('/export', 'export')->name('export');
+    Route::get('/entry', 'entry')->name('entry');
+    Route::post('/entry', 'saveDay')->name('save');
+    Route::delete('/entry', 'deleteDay')->name('delete');
+    Route::patch('/actions/{action}', 'updateActionStatus')->name('action.status');
+  });
+  Route::prefix('daily-performance/import')->name('dp.')->controller(DpImportController::class)->group(function () {
+    Route::get('/', 'page')->name('import');
+    Route::get('/template', 'template')->name('import.template');
+    Route::post('/', 'preview')->name('import.preview');
+    Route::post('/commit', 'commit')->name('import.commit');
+  });
 });

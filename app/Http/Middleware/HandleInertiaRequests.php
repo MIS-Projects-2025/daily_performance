@@ -41,6 +41,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'appName' => config('app.name'), // This pulls from .env
             'display_name' => env('APP_DISPLAY_NAME', ''),
+            'logo_url' => asset('telford_logo.jpg'),
         ];
     }
 }

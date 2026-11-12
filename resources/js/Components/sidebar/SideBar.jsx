@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 
 export default function Sidebar() {
-    const { display_name, emp_data, system_status } = usePage().props;
+    const { display_name, emp_data, system_status, logo_url } = usePage().props;
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
@@ -162,9 +162,11 @@ export default function Sidebar() {
                                 !isSidebarOpen && "justify-center",
                             )}
                         >
-                            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-primary shadow-md">
-                                <FileWarning className="w-4 h-4 text-primary-foreground" />
-                            </div>
+                            <img
+                                src={logo_url}
+                                alt="Telford"
+                                className="w-9 h-9 rounded-xl object-contain flex-shrink-0 bg-white shadow-md"
+                            />
 
                             {isSidebarOpen && (
                                 <div className="flex flex-col min-w-0">
@@ -178,7 +180,7 @@ export default function Sidebar() {
                                         className="text-[7px] font-medium tracking-widest uppercase
                                         text-primary/70"
                                     >
-                                        Workspace
+                                        TELFORD
                                     </span>
                                 </div>
                             )}
