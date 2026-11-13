@@ -47,7 +47,7 @@ return [
             'url' => env('QDB_URL'),
             'host' => env('QDB_HOST', '127.0.0.1'),
             'port' => env('QDB_PORT', '3306'),
-            'database' => env('QDB_DATABASE', 'qdn_new_db'),
+            'database' => env('QDB_DATABASE', 'laravel'),
             'username' => env('QDB_USERNAME', 'root'),
             'password' => env('QDB_PASSWORD', ''),
             'unix_socket' => env('QDB_SOCKET', ''),
