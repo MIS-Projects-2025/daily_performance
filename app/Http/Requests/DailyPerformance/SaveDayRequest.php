@@ -34,7 +34,7 @@ class SaveDayRequest extends FormRequest
 
         return [
             'entry_date' => ['required', 'date_format:Y-m-d'],
-            'cal_workweek' => ['required', 'integer', Rule::exists($conn . '.' . config('dp.calendar_table'), 'cal_workweek')],
+            'cal_workweek' => ['required', 'integer', Rule::exists(config('dp.ref_connection') . '.' . config('dp.calendar_table'), 'cal_workweek')],
             'line_code' => ['required', 'string', Rule::exists($conn . '.dp_line', 'code')],
             'rows' => ['required', 'array', 'min:1'],
             'rows.*.id' => ['nullable', 'integer'],
@@ -70,3 +70,4 @@ class SaveDayRequest extends FormRequest
         ];
     }
 }
+

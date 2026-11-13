@@ -91,7 +91,7 @@ class DpExcelImport
 
         $factories = DpLine::where('active', 1)->pluck('code')->mapWithKeys(fn ($c) => [mb_strtolower($c) => $c])->all();
         $packages = collect(PackageTypes::names())->mapWithKeys(fn ($n) => [mb_strtolower($n) => $n])->all();
-        $weeks = DB::connection(config('dp.connection'))->table(config('dp.calendar_table'))->distinct()->pluck('cal_workweek')->map(fn ($w) => (int) $w)->flip()->all();
+        $weeks = DB::connection(config('dp.ref_connection'))->table(config('dp.calendar_table'))->distinct()->pluck('cal_workweek')->map(fn ($w) => (int) $w)->flip()->all();
         $statuses = collect(DpAction::STATUSES)->mapWithKeys(fn ($s) => [mb_strtolower($s) => $s])->all();
 
         $groups = [];

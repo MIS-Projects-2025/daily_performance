@@ -15,7 +15,7 @@ class PackageTypes
     {
         $list = Cache::remember('dp.package_types', 600, function () {
             $col = config('dp.package_column');
-            return DB::connection(config('dp.connection'))
+            return DB::connection(config('dp.ref_connection'))
                 ->table(config('dp.package_table'))
                 ->whereNotNull($col)->where($col, '<>', '')
                 ->distinct()->orderBy($col)
@@ -32,3 +32,4 @@ class PackageTypes
         return array_map(fn ($n) => ['id' => $n, 'code' => $n], static::names());
     }
 }
+

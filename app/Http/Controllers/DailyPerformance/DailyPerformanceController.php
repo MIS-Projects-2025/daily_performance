@@ -23,12 +23,15 @@ class DailyPerformanceController extends Controller
         return DB::connection(config('dp.connection'));
     }
 
-    // One row per work week, even if analog_calendar holds one row per day
+    // One row per work week, even if analog_calendar holds one row per day.
+    // Read through the qdn_new_db connection, which can be on another server,
+    // so it is never joined in SQL with the dp_* tables.
     private function calendarWeeks()
     {
-        return $this->db()->table(config('dp.calendar_table'))
+        return DB::connection(config('dp.ref_connection'))->table(config('dp.calendar_table'))
             ->selectRaw('cal_workweek, MIN(cal_year) AS cal_year, MIN(cal_quarter) AS cal_quarter, MIN(cal_month) AS cal_month')
-            ->groupBy('cal_workweek');
+            ->groupBy('cal_workweek')
+            ->orderBy('cal_workweek');
     }
 
     private function lines()
@@ -63,11 +66,10 @@ class DailyPerformanceController extends Controller
             $f['ww'] = $latest->cal_workweek;
         }
 
-        $cal = $this->calendarWeeks();
+        $cal = $this->calendarWeeks()->get()->keyBy(fn ($c) => (int) $c->cal_workweek);
         $q = DpDaily::query()
             ->from('dp_daily as d')
-            ->leftJoinSub($cal, 'c', 'c.cal_workweek', '=', 'd.cal_workweek')
-            ->select('d.*', 'c.cal_year', 'c.cal_quarter', 'c.cal_month', 'd.package_type as package_code');
+            ->select('d.*', 'd.package_type as package_code');
 
         if ($mode === 'ww' && !empty($f['ww'])) {
             $q->where('d.cal_workweek', $f['ww']);
@@ -77,9 +79,10 @@ class DailyPerformanceController extends Controller
             if (!empty($f['to'])) $q->where('d.entry_date', '<=', $f['to']);
         }
         if ($mode === 'period') {
-            if (!empty($f['year'])) $q->where('c.cal_year', $f['year']);
-            if (!empty($f['quarter'])) $q->where('c.cal_quarter', $f['quarter']);
-            if (!empty($f['month'])) $q->where('c.cal_month', $f['month']);
+            $weeks = $cal->filter(fn ($c) => (empty($f['year']) || (string) $c->cal_year === (string) $f['year'])
+                && (empty($f['quarter']) || (int) $c->cal_quarter === (int) $f['quarter'])
+                && (empty($f['month']) || (int) $c->cal_month === (int) $f['month']))->keys()->all();
+            $q->whereIn('d.cal_workweek', $weeks ?: [-1]);
         }
         if (!empty($f['lines'])) {
             $q->whereIn('d.line_code', $f['lines']);
@@ -92,7 +95,13 @@ class DailyPerformanceController extends Controller
             });
         }
 
-        $rows = $q->orderBy('d.entry_date')->orderBy('d.line_code')->orderBy('d.package_type')->get();
+        $rows = $q->orderBy('d.entry_date')->orderBy('d.line_code')->orderBy('d.package_type')->get()
+            ->each(function ($r) use ($cal) {
+                $c = $cal->get((int) $r->cal_workweek);
+                $r->setAttribute('cal_year', $c?->cal_year);
+                $r->setAttribute('cal_quarter', $c?->cal_quarter);
+                $r->setAttribute('cal_month', $c?->cal_month);
+            });
 
         $actions = $rows->isEmpty() ? collect() : DpAction::query()
             ->from('dp_action as a')
@@ -110,7 +119,7 @@ class DailyPerformanceController extends Controller
         [$rows, $actions, $filters, $latest] = $this->filtered($request);
 
         return Inertia::render('DailyPerformance/Dashboard', [
-            'calendar' => $this->calendarWeeks()->orderBy('cal_workweek')->get(),
+            'calendar' => $this->calendarWeeks()->get(),
             'lines' => $this->lines(),
             'packageTypes' => PackageTypes::options(),
             'hasUnassigned' => DpDaily::whereNull('package_type')->exists(),
@@ -183,7 +192,7 @@ class DailyPerformanceController extends Controller
         return Inertia::render('DailyPerformance/Entry', [
             'date' => $date,
             'factory' => $factory,
-            'calendar' => $this->calendarWeeks()->orderBy('cal_workweek')->get(),
+            'calendar' => $this->calendarWeeks()->get(),
             'lines' => $lines,
             'filled' => $filled,
             'packageTypes' => PackageTypes::options(),
